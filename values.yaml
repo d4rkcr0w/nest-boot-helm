@@ -61,6 +61,12 @@ redis:
     maxmemory 512mb
     maxmemory-policy allkeys-lru
 
+rabbitmq:
+  enabled: true
+  auth:
+    username: guest
+    password: guest
+
 externalPostgresql:
   host: localhost
   port: "5432"
@@ -74,3 +80,11 @@ externalRedis:
   port: "6379"
   password: ""
   existingSecret:
+
+externalRabbitmq:
+  host: localhost
+  port: 5672
+  username: guest
+  password: guest
+  vhost: ""
+  existingSecret: ""

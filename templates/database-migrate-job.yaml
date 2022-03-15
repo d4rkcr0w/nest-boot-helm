@@ -29,6 +29,7 @@ spec:
           env:
             {{- include "app.configure.postgresql" . | nindent 12 }}
             {{- include "app.configure.redis" . | nindent 12 }}
+            {{- include "app.configure.rabbitmq" . | nindent 12 }}
             {{- include "app.configure.meilisearch" . | nindent 12 }}
           envFrom:
             - secretRef:

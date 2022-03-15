@@ -37,6 +37,14 @@
 {{- end -}}
 
 {{/*
+创建一个默认的全限定 RabbitMQ 名称
+*/}}
+{{- define "app.rabbitmq.fullname" -}}
+{{- $name := default "rabbitmq" .Values.rabbitmq.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
 创建一个默认的全限定 Meilisearch 名称
 */}}
 {{- define "app.meilisearch.fullname" -}}
@@ -56,7 +64,7 @@
     {{- if .Values.externalPostgresql.existingSecret -}}
         {{- printf "%s" .Values.externalPostgresql.existingSecret -}}
     {{- else -}}
-        {{ printf "%s-%s" (include "common.names.fullname" .) "external-postgresql" }}
+        {{ printf "%s-%s" (include "common.names.fullname" .) "postgresql" }}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -74,7 +82,25 @@
     {{- if .Values.externalRedis.existingSecret -}}
         {{- printf "%s" .Values.externalRedis.existingSecret -}}
     {{- else -}}
-        {{ printf "%s-%s" (include "common.names.fullname" .) "external-redis" }}
+        {{ printf "%s-%s" (include "common.names.fullname" .) "redis" }}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+获取 RabbitMQ 凭证密文名称
+*/}}
+{{- define "app.rabbitmq.secretName" -}}
+{{- if and (.Values.rabbitmq.enabled) (not .Values.rabbitmq.auth.existingPasswordSecret) -}}
+    {{- $name := default "rabbitmq" .Values.rabbitmq.nameOverride -}}
+    {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- else if and (.Values.rabbitmq.enabled) ( .Values.rabbitmq.auth.existingPasswordSecret) -}}
+    {{- printf "%s" .Values.rabbitmq.auth.existingPasswordSecret -}}
+{{- else }}
+    {{- if .Values.externalRabbitmq.existingSecret -}}
+        {{- printf "%s" .Values.externalRabbitmq.existingSecret -}}
+    {{- else -}}
+        {{ printf "%s-%s" (include "common.names.fullname" .) "rabbitmq" }}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -118,6 +144,25 @@
       name: {{ include "app.redis.secretName" . }}
       key: redis-password
 {{- end -}}
+
+{{/*
+添加环境变量来配置 RabbitMQ 值
+*/}}
+{{- define "app.configure.rabbitmq" -}}
+- name: RABBITMQ_HOST
+  value: {{ ternary (include "app.rabbitmq.fullname" .) .Values.externalRabbitmq.host .Values.rabbitmq.enabled | quote }}
+- name: RABBITMQ_PORT
+  value: {{ ternary "5432" .Values.externalRabbitmq.port .Values.rabbitmq.enabled | quote }}
+- name: RABBITMQ_VHOST
+  value: {{ ternary .Values.rabbitmq.vhost .Values.externalRabbitmq.vhost .Values.rabbitmq.enabled | quote }}
+- name: RABBITMQ_USERNAME
+  value: {{ ternary .Values.rabbitmq.username .Values.externalRabbitmq.username .Values.rabbitmq.enabled | quote }}
+- name: RABBITMQ_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "app.rabbitmq.secretName" . }}
+      key: rabbitmq-password
+{{- end }}
 
 {{/*
 添加环境变量来配置 Meilisearch 值
