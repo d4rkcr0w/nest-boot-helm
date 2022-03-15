@@ -1,0 +1,76 @@
+image:
+  registry: index.docker.io
+  repository: nest-boot/nest-boot
+  tag: "latest"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+server:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  podLabels: {}
+  podAnnotations: {}
+  nodeSelector: {}
+
+worker:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  podLabels: {}
+  podAnnotations: {}
+  nodeSelector: {}
+
+ingress:
+  enabled: true
+  host: app.local
+  tls:
+    enabled: false
+    existingSecret: ""
+  annotations: {}
+
+commonAnnotations: {}
+
+commonLabels: {}
+
+postgresql:
+  enabled: true
+  postgresqlDatabase: nest-boot
+  postgresqlPassword: "secret"
+  persistence:
+    enabled: true
+  initdbScripts:
+    create-extension-uuid-ossp.sql: |
+      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: secret
+    existingSecret: ""
+  configmap: |-
+    # Enable AOF https://redis.io/topics/persistence#append-only-file
+    appendonly yes
+
+    # Disable RDB persistence, AOF persistence already enabled.
+    save ""
+
+    # Max Memory
+    maxmemory 512mb
+    maxmemory-policy allkeys-lru
+
+externalPostgresql:
+  host: localhost
+  port: "5432"
+  name: nest-boot
+  username: postgres
+  password: ""
+  existingSecret:
+
+externalRedis:
+  host: localhost
+  port: "6379"
+  password: ""
+  existingSecret:

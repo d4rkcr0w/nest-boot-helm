@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-database-migrate" (include "common.names.fullname" .) }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  template:
+    metadata:
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+    spec:
+      {{- include "app.imagePullSecrets" . | nindent 6 }}
+      restartPolicy: Never
+      containers:
+        - name: {{ include "common.names.fullname" . }}
+          image: {{ include "app.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          command: ["nest-boot", "migration:run"]
+          env:
+            {{- include "app.configure.postgresql" . | nindent 12 }}
+            {{- include "app.configure.redis" . | nindent 12 }}
+            {{- include "app.configure.meilisearch" . | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ include "common.names.fullname" . | quote }}
+                optional: true

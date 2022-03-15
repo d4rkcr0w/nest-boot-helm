@@ -1,0 +1,25 @@
+apiVersion: v2
+
+name: nest-boot
+description: A Helm chart for Kubernetes
+type: application
+
+appVersion: 0.0.0
+version: 0.0.7
+
+dependencies:
+  - name: common
+    version: 1.x.x
+    repository: https://charts.bitnami.com/bitnami
+  - name: postgresql
+    version: 6.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: 12.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - condition: meilisearch.enabled
+    name: meilisearch
+    repository: https://meilisearch.github.io/meilisearch-kubernetes
+    version: 0.x.x
